@@ -7,6 +7,7 @@ import Image from "next/image";
 import { pusherClient } from "@/lib/push";
 import { toast } from "react-hot-toast";
 import UnseenChatToast from "./UnseenChatToast";
+import Link from "next/link";
 
 interface SidebarChatListProps {
   sessionId: string;
@@ -81,27 +82,26 @@ const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
         }).length;
         return (
           <li key={friend.id}>
-            <a
-              href={`/dashboard/chat/${chatHrefConstructor(sessionId, friend.id)}`}
-              className="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 group flex items-center gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold"
-            >
-              <span className="relative h-8 w-8 bg-gray-50 group-hover:border-indigo-600 group-hover:text-indigo-600 flex shrink-0 items-center justify-center rounded-full border text-[0.625rem] font-medium">
-                <Image
-                  fill
-                  referrerPolicy="no-referrer"
-                  className="rounded-full hover:border"
-                  src={friend.image || ""}
-                  alt={`${friend.image} profile picture`}
-                />
-              </span>
-              <span className="truncate">{friend.name}</span>
+            <Link href={`/dashboard/chat/${chatHrefConstructor(sessionId, friend.id)}`} prefetch>
+              <div className="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 group flex items-center gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold">
+                <span className="relative h-8 w-8 bg-gray-50 group-hover:border-indigo-600 group-hover:text-indigo-600 flex shrink-0 items-center justify-center rounded-full border text-[0.625rem] font-medium">
+                  <Image
+                    fill
+                    referrerPolicy="no-referrer"
+                    className="rounded-full hover:border"
+                    src={friend.image || ""}
+                    alt={`${friend.image} profile picture`}
+                  />
+                </span>
+                <span className="truncate">{friend.name}</span>
 
-              {unseenMessagesCount > 0 ? (
-                <div className="bg-indigo-600 font-medium text-xs text-white w-4 h-4 rounded-full flex justify-center items-center">
-                  {unseenMessagesCount}
-                </div>
-              ) : null}
-            </a>
+                {unseenMessagesCount > 0 ? (
+                  <div className="bg-indigo-600 font-medium text-xs text-white w-4 h-4 rounded-full flex justify-center items-center">
+                    {unseenMessagesCount}
+                  </div>
+                ) : null}
+              </div>
+            </Link>
           </li>
         );
       })}

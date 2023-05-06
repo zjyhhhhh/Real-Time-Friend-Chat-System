@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import { UpstashRedisAdapter } from "@next-auth/upstash-redis-adapter";
-import { db } from "./db";
+import { redisDB } from "./redisDB";
 import GithubProvider from "next-auth/providers/github";
 import { fetchRedis } from "@/helpers/redis";
 
@@ -20,7 +20,7 @@ function getGithubCredentials() {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: UpstashRedisAdapter(db),
+  adapter: UpstashRedisAdapter(redisDB),
   session: {
     strategy: "jwt",
   },

@@ -25,7 +25,7 @@ const Messages: FC<MessagesProps> = ({
   const [messages, setMessages] = useState<Message[]>(initialMessages);
 
   useEffect(() => {
-    pusherClient.subscribe(toPusherKey(`chat:${chatId}`));
+    pusherClient.subscribe(toPusherKey(`chat:${chatId}:messages`));
 
     const messageHandler = (message: Message) => {
       setMessages((prev) => [message, ...prev]);
@@ -34,7 +34,7 @@ const Messages: FC<MessagesProps> = ({
     pusherClient.bind("incoming-message", messageHandler);
 
     return () => {
-      pusherClient.unsubscribe(toPusherKey(`chat:${chatId}`));
+      pusherClient.unsubscribe(toPusherKey(`chat:${chatId}:messages`));
       pusherClient.unbind("incoming-message", messageHandler);
     };
   }, [chatId]);
@@ -42,7 +42,7 @@ const Messages: FC<MessagesProps> = ({
   const scrollDownRef = useRef<HTMLDivElement | null>(null);
 
   const formatTimestamp = (timestamp: number) => {
-    return format(timestamp, "HH:mm");
+    return format(timestamp, "MM-dd HH:mm");
   };
 
   return (

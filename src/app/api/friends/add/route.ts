@@ -2,7 +2,7 @@ import { fetchRedis } from "@/helpers/redis";
 import { authOptions } from "@/lib/auth";
 import { addFriendValidator } from "@/lib/validations/add-friend";
 import { getServerSession } from "next-auth";
-import { db } from "@/lib/db";
+import { redisDB } from "@/lib/redisDB";
 import { z } from "zod";
 import { pusherServer } from "@/lib/push";
 import { toPusherKey } from "@/lib/utils";
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       }
     );
 
-    db.sadd(`user:${idToAdd}:incoming_friend_requests`, session.user.id);
+    redisDB.sadd(`user:${idToAdd}:incoming_friend_requests`, session.user.id);
 
     return new Response("OK");
   } catch (error) {

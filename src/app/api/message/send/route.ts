@@ -1,12 +1,14 @@
 import { fetchRedis } from "@/helpers/redis";
 import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { redisDB } from "@/lib/redisDB";
 import { pusherServer } from "@/lib/push";
 import { toPusherKey } from "@/lib/utils";
-import { Message, messageValidator } from "@/lib/validations/message";
+import { Message, messageArrayValidator, messageValidator } from "@/lib/validations/message";
 import { nanoid } from "nanoid";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
+import { mysqlDB } from "@/lib/mysqlDB";
+import { format } from "date-fns";
 
 export async function POST(req: Request) {
   try {
@@ -49,7 +51,7 @@ export async function POST(req: Request) {
     const message = messageValidator.parse(messageData);
 
     // all valid, send the message
-    pusherServer.trigger(toPusherKey(`chat:${chatId}`), "incoming-message", message);
+    pusherServer.trigger(toPusherKey(`chat:${chatId}:messages`), "incoming-message", message);
 
     pusherServer.trigger(toPusherKey(`user:${friendId}:chats`), "new_message", {
       ...message,
@@ -57,10 +59,43 @@ export async function POST(req: Request) {
       senderName: sender.name,
     });
 
-    await db.zadd(`chat:${chatId}:messages`, {
+    await redisDB.zadd(`chat:${chatId}:messages`, {
       score: timestamp,
       member: JSON.stringify(message),
     });
+
+    await redisDB.incr(`chat:${chatId}:message_counter`);
+
+    const messageCounter = await fetchRedis("get", `chat:${chatId}:message_counter`);
+
+    if (messageCounter === "40") {
+      const historyMessagesRaw = await fetchRedis("zrange", `chat:${chatId}:messages`, 0, 19);
+      const historyMessages = historyMessagesRaw.map((msg: string) => JSON.parse(msg));
+
+      // store the history message in mysql
+      for (const message of historyMessages) {
+        try {
+          await mysqlDB.query(
+            "INSERT INTO Message (id, senderId, text, timestamp) VALUES (?, ?, ?, ?)",
+            [
+              message.id,
+              message.senderId,
+              message.text,
+              // format(new Date(message.timestamp), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
+              message.timestamp,
+            ]
+          );
+        } catch (err) {
+          console.error("Failed to insert data into MySQL:", err);
+        }
+      }
+
+      // delete the history message in redis
+      await fetchRedis("zrem", `chat:${chatId}:messages`, ...historyMessagesRaw);
+
+      // reset the counter
+      fetchRedis("set", `chat:${chatId}:message_counter`, "20");
+    }
 
     return new Response("OK");
   } catch (error) {

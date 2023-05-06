@@ -11,10 +11,10 @@ interface Chat {
 }
 
 interface Message {
-  id: string;
-  senderId: string;
-  receiverId: string;
-  text: string;
+  id: string & { length: 100 };
+  senderId: string & { length: 50 };
+  receiverId: string & { length: 50 };
+  text: string & { length: 400 };
   timestamp: number;
 }
 
